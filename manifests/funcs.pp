@@ -8,19 +8,24 @@ class fpm::funcs {
 		$package_version,
 		$build_dirname = '/tmp/build',
 		$with_doc = true,
-		$with_dev = true,
+		$with_dev = true
 	) {
 
 		$gem_path = gem_path()
 
 		if defined(File["${package_src}"]) {
-			file { "${name}_${build_dirname}": ensure => directory }
+			file { "${name}_${build_dirname}":
+				name => "${build_dirname}",
+				ensure => directory,
+			}
 			exec { "${name}_make_install":
 				path => "/bin:/usr/bin:/usr/sbin",
+				cwd => "${package_src}",
 				command => "make install DESTDIR=${build_dirname}",
 				require => [
 					File["${name}_${build_dirname}"],
 					File["${package_src}"],
+					Exec["build-torque"],
 				],
 			}
 			exec { "${name}_build_package":

@@ -30,6 +30,7 @@ define fpm::package(
 					File["${package_src}"],
 					Exec["build-torque"],
 				],
+				timeout => 0,
 			}
 
 			exec { "${name}_build_package":
@@ -37,20 +38,26 @@ define fpm::package(
 				path => "${gem_path}:/usr/bin:/bin",
 				command => "fpm -s dir -t ${package_type} -n ${name} -v ${package_version} -C ${build_dirname} -p ${name}-VERSION_ARCH.${package_type} ${install_dist}/bin ${install_dist}/lib",
 				require => Exec["${name}_make_install"],
+				timeout => 0,
+				unless => "ls ${torque_packages_broker_dir}/${name}-*deb"
 			}
 
 			exec { "${name}_build_doc":
 				cwd => "${package_src}",
 				path => "${gem_path}:/usr/bin:/bin",
-				command => "fpm -s dir -t ${package_type} -n ${name}-doc -v ${package_version} -C ${build_dirname} -p ${name}-doc-VERSION_ARCH.${package_type} usr/share/man",
+				command => "fpm -s dir -t ${package_type} -n ${name}-doc -v ${package_version} -C ${build_dirname} -p ${name}_doc-VERSION_ARCH.${package_type} usr/share/man",
 				require => Exec["${name}_make_install"],
+				timeout => 0,
+				unless => "ls ${torque_packages_broker_dir}/${name}_doc*deb"
 			}
 
 			exec { "${name}_build_dev":
 				cwd => "${package_src}",
 				path => "${gem_path}:/usr/bin:/bin",
-				command => "fpm -s dir -t ${package_type} -n ${name}-dev -v ${package_version} -C ${build_dirname} -p ${name}-dev-VERSION_ARCH.${package_type} usr/include",
+				command => "fpm -s dir -t ${package_type} -n ${name}-dev -v ${package_version} -C ${build_dirname} -p ${name}_dev-VERSION_ARCH.${package_type} usr/include",
 				require => Exec["${name}_make_install"],
+				timeout => 0,
+				unless => "ls ${torque_packages_broker_dir}/${name}_dev*deb"
 			}
 
 			exec { "${name}_store_build_package":

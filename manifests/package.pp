@@ -24,7 +24,7 @@ define fpm::package(
 			exec { "${name}_make_install":
 				path => "/bin:/usr/bin:/usr/sbin",
 				cwd => "${package_src}",
-				command => "make install DESTDIR=${build_dirname}",
+				command => "nice -19 make install DESTDIR=${build_dirname}",
 				require => [
 					File["${name}_${build_dirname}"],
 					File["${package_src}"],
@@ -64,7 +64,12 @@ define fpm::package(
 				cwd => "${package_src}",
 				path => "/usr/bin:/bin",
 				command => "mv *deb ${torque_packages_broker_dir}",
-				require => [ Exec["${name}_build_package"], Exec["${name}_build_doc"], Exec["${name}_build_dev"] ], 
+				require => [
+					Exec["${name}_build_package"],
+					Exec["${name}_build_doc"],
+					Exec["${name}_build_dev"]
+				],
+				onlyif => "ls ${package_src}/*deb",
 			}
 
 		} else {

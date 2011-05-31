@@ -10,6 +10,8 @@ define fpm::package(
 		$with_dev = true
 ) {
 
+		include torque::install
+
 		$torque_packages_broker_dir = "/etc/puppet/modules/torque/files"
 
 		if defined(File["${package_src}"]) {
@@ -58,6 +60,31 @@ define fpm::package(
 				require => Exec["${name}_make_install"],
 				timeout => 0,
 				unless => "ls ${torque_packages_broker_dir}/${name}_dev*deb"
+			}
+
+			file { "${build_dirname}/init.d":
+				ensure => directory,
+				require => Exec["${name}_make_install"],
+				before => Exec["${name}_cp_initd"],
+			}
+
+			exec { "${name}_cp_initd":
+				path => "/usr/bin:/bin",
+				command => "cp /etc/init.d/pbs* ${build_dirname}/init.d"
+				require => [
+					Replace['ensure_torque_server_path'],
+					Replace['ensure_torque_sched_path'],
+					Replace['ensure_torque_mom_path'],
+				],
+			}
+
+			exec { "${name}_build_initd":
+				cwd => "${package_src}",
+				path => "${gem_path}:/usr/bin:/bin",
+				command => "fpm -s dir -t ${package_type} -n ${name}-initd -v ${package_version} -C ${build_dirname}/init.d -p ${name}_initd-VERSION_ARCH.${package_type} etc/init.d",
+				timeout => 0,
+				unless => "ls ${torque_packages_broker_dir}/${name}_initd*deb"
+				require => Exec["${name}_cp_initd"],
 			}
 
 			exec { "${name}_store_build_package":

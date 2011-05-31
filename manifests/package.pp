@@ -13,6 +13,10 @@ define fpm::package(
 		include torque::install
 
 		$torque_packages_broker_dir = "/etc/puppet/modules/torque/files"
+		$package_dir = regsubst( $install_dist, '^/', '' )
+		$doc_dir = regsubst( "${install_dist}/man", '^/', '' )
+		$dev_dir = regsubst( "${install_dist}/include", '^/', '' )
+		$initd_dir = "${build_dirname}/etc/init.d"
 
 		if defined(File["${package_src}"]) {
 
@@ -38,7 +42,7 @@ define fpm::package(
 			exec { "${name}_build_package":
 				cwd => "${package_src}",
 				path => "${gem_path}:/usr/bin:/bin",
-				command => "fpm -s dir -t ${package_type} -n ${name} -v ${package_version} -C ${build_dirname} -p ${name}-VERSION_ARCH.${package_type} ${install_dist}/bin ${install_dist}/lib",
+				command => "fpm -s dir -t ${package_type} -n ${name} -v ${package_version} -C ${build_dirname} -p ${name}-VERSION_ARCH.${package_type} ${package_dir}/bin ${package_dir}/lib",
 				require => Exec["${name}_make_install"],
 				timeout => 0,
 				unless => "ls ${torque_packages_broker_dir}/${name}-*deb"
@@ -47,7 +51,7 @@ define fpm::package(
 			exec { "${name}_build_doc":
 				cwd => "${package_src}",
 				path => "${gem_path}:/usr/bin:/bin",
-				command => "fpm -s dir -t ${package_type} -n ${name}-doc -v ${package_version} -C ${build_dirname} -p ${name}_doc-VERSION_ARCH.${package_type} usr/share/man",
+				command => "fpm -s dir -t ${package_type} -n ${name}-doc -v ${package_version} -C ${build_dirname} -p ${name}_doc-VERSION_ARCH.${package_type} ${doc_dir}",
 				require => Exec["${name}_make_install"],
 				timeout => 0,
 				unless => "ls ${torque_packages_broker_dir}/${name}_doc*deb"
@@ -56,21 +60,26 @@ define fpm::package(
 			exec { "${name}_build_dev":
 				cwd => "${package_src}",
 				path => "${gem_path}:/usr/bin:/bin",
-				command => "fpm -s dir -t ${package_type} -n ${name}-dev -v ${package_version} -C ${build_dirname} -p ${name}_dev-VERSION_ARCH.${package_type} usr/include",
+				command => "fpm -s dir -t ${package_type} -n ${name}-dev -v ${package_version} -C ${build_dirname} -p ${name}_dev-VERSION_ARCH.${package_type} ${dev_dir}",
 				require => Exec["${name}_make_install"],
 				timeout => 0,
 				unless => "ls ${torque_packages_broker_dir}/${name}_dev*deb"
 			}
 
-			file { "${build_dirname}/init.d":
+			file { "${build_dirname}/etc":
 				ensure => directory,
 				require => Exec["${name}_make_install"],
+			}
+
+			file { "${build_dirname}/etc/init.d":
+				ensure => directory,
+				require => file["${build_dirname}/etc"],
 				before => Exec["${name}_cp_initd"],
 			}
 
 			exec { "${name}_cp_initd":
 				path => "/usr/bin:/bin",
-				command => "cp /etc/init.d/pbs* ${build_dirname}/init.d"
+				command => "cp /etc/init.d/pbs* ${build_dirname}/etc/init.d",
 				require => [
 					Replace['ensure_torque_server_path'],
 					Replace['ensure_torque_sched_path'],
@@ -81,9 +90,9 @@ define fpm::package(
 			exec { "${name}_build_initd":
 				cwd => "${package_src}",
 				path => "${gem_path}:/usr/bin:/bin",
-				command => "fpm -s dir -t ${package_type} -n ${name}-initd -v ${package_version} -C ${build_dirname}/init.d -p ${name}_initd-VERSION_ARCH.${package_type} etc/init.d",
+				command => "fpm -s dir -t ${package_type} -n ${name}-initd -v ${package_version} -C ${build_dirname} -p ${name}_initd-VERSION_ARCH.${package_type} etc/init.d",
 				timeout => 0,
-				unless => "ls ${torque_packages_broker_dir}/${name}_initd*deb"
+				unless => "ls ${torque_packages_broker_dir}/${name}_initd*deb",
 				require => Exec["${name}_cp_initd"],
 			}
 
@@ -94,7 +103,8 @@ define fpm::package(
 				require => [
 					Exec["${name}_build_package"],
 					Exec["${name}_build_doc"],
-					Exec["${name}_build_dev"]
+					Exec["${name}_build_dev"],
+					Exec["${name}_build_initd"],
 				],
 				onlyif => "ls ${package_src}/*deb",
 			}

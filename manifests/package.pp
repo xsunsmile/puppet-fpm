@@ -42,7 +42,7 @@ define fpm::package(
 			exec { "${name}_build_package":
 				cwd => "${package_src}",
 				path => "${gem_path}:/usr/bin:/bin",
-				command => "fpm -s dir -t ${package_type} -n ${name} -v ${package_version} -C ${build_dirname} -p ${name}-VERSION_ARCH.${package_type} ${package_dir}/bin ${package_dir}/lib",
+				command => "fpm -s dir -t ${package_type} -n ${name} -v ${package_version} -C ${build_dirname} -p ${name}-VERSION_ARCH.${package_type} ${package_dir}/bin ${package_dir}/lib ${package_dir}/sbin",
 				require => Exec["${name}_make_install"],
 				timeout => 0,
 				unless => "ls ${torque_packages_broker_dir}/${name}-*deb"

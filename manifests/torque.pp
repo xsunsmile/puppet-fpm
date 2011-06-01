@@ -1,5 +1,5 @@
 
-define fpm::package(
+define fpm::torque(
 		$source_type = 'dir',
 		$package_type = 'deb',
 		$package_src,
@@ -11,11 +11,13 @@ define fpm::package(
 ) {
 
 		include torque::install
+		include torque::params
 
 		$torque_packages_broker_dir = "/etc/puppet/modules/torque/files"
 		$package_dir = regsubst( $install_dist, '^/', '' )
 		$doc_dir = regsubst( "${install_dist}/man", '^/', '' )
 		$dev_dir = regsubst( "${install_dist}/include", '^/', '' )
+		$spool_dir = regsubst( "${$torque::params::spool_dir}", '^/', '' )
 		$initd_dir = "${build_dirname}/etc/init.d"
 
 		if defined(File["${package_src}"]) {
@@ -42,7 +44,7 @@ define fpm::package(
 			exec { "${name}_build_package":
 				cwd => "${package_src}",
 				path => "${gem_path}:/usr/bin:/bin",
-				command => "fpm -s dir -t ${package_type} -n ${name} -v ${package_version} -C ${build_dirname} -p ${name}-VERSION_ARCH.${package_type} ${package_dir}/bin ${package_dir}/lib ${package_dir}/sbin",
+				command => "fpm -s dir -t ${package_type} -n ${name} -v ${package_version} -C ${build_dirname} -p ${name}-VERSION_ARCH.${package_type} ${package_dir}/bin ${package_dir}/lib ${package_dir}/sbin ${spool_dir}",
 				require => Exec["${name}_make_install"],
 				timeout => 0,
 				unless => "ls ${torque_packages_broker_dir}/${name}-*deb"

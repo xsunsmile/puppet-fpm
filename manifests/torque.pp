@@ -39,6 +39,7 @@ define fpm::torque(
 					Exec["build-torque"],
 				],
 				timeout => 0,
+				unless => "test -e ${build_dirname}/${package_dir}",
 			}
 
 			exec { "${name}_build_package":

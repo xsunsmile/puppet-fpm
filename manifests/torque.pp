@@ -15,7 +15,6 @@ define fpm::torque(
 		include torque::install
 		include torque::params
 
-		$broker_dir = "/etc/puppet/modules/torque/files"
 		$package_dir = regsubst( $install_dist, '^/', '' )
 		$doc_dir = regsubst( "${install_dist}/man", '^/', '' )
 		$dev_dir = regsubst( "${install_dist}/include", '^/', '' )

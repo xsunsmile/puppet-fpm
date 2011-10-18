@@ -37,7 +37,7 @@ define fpm::torque(
 					File["${package_src}"],
 					Exec["build-torque"],
 				],
-				timeout => 0,
+				timeout => 600,
 				unless => "test -e ${build_dirname}/${package_dir}",
 			}
 
@@ -46,7 +46,7 @@ define fpm::torque(
 				path => "${gem_bin_path}:/usr/bin:/bin",
 				command => "fpm -s dir -t ${package_type} -n ${name} -v ${package_version} -C ${build_dirname} -p ${name}-VERSION_ARCH.${package_type} ${package_dir}/bin ${package_dir}/lib ${package_dir}/sbin ${spool_dir}",
 				require => [ Package['fpm'], Exec["${name}_make_install"], ],
-				timeout => 0,
+				timeout => 600,
 				unless => "ls ${broker_dir}/${name}-*deb"
 			}
 
@@ -55,7 +55,7 @@ define fpm::torque(
 				path => "${gem_bin_path}:/usr/bin:/bin",
 				command => "fpm -s dir -t ${package_type} -n ${name}-doc -v ${package_version} -C ${build_dirname} -p ${name}_doc-VERSION_ARCH.${package_type} ${doc_dir}",
 				require => [ Package['fpm'], Exec["${name}_make_install"], ],
-				timeout => 0,
+				timeout => 600,
 				unless => "ls ${broker_dir}/${name}_doc*deb"
 			}
 
@@ -64,7 +64,7 @@ define fpm::torque(
 				path => "${gem_bin_path}:/usr/bin:/bin",
 				command => "fpm -s dir -t ${package_type} -n ${name}-dev -v ${package_version} -C ${build_dirname} -p ${name}_dev-VERSION_ARCH.${package_type} ${dev_dir}",
 				require => [ Package['fpm'], Exec["${name}_make_install"], ],
-				timeout => 0,
+				timeout => 600,
 				unless => "ls ${broker_dir}/${name}_dev*deb"
 			}
 
@@ -82,6 +82,7 @@ define fpm::torque(
 			exec { "${name}_cp_initd":
 				path => "/usr/bin:/bin",
 				command => "cp /etc/init.d/pbs* ${build_dirname}/etc/init.d",
+				timeout => 600,
 				require => [
 					Replace['ensure_torque_server_path'],
 					Replace['ensure_torque_sched_path'],
@@ -93,7 +94,7 @@ define fpm::torque(
 				cwd => "${package_src}",
 				path => "${gem_bin_path}:/usr/bin:/bin",
 				command => "fpm -s dir -t ${package_type} -n ${name}-initd -v ${package_version} -C ${build_dirname} -p ${name}_initd-VERSION_ARCH.${package_type} etc/init.d",
-				timeout => 0,
+				timeout => 600,
 				unless => "ls ${broker_dir}/${name}_initd*deb",
 				require => [ Package['fpm'], Exec["${name}_cp_initd"], ],
 			}
@@ -108,6 +109,7 @@ define fpm::torque(
 					Exec["${name}_build_dev"],
 					Exec["${name}_build_initd"],
 				],
+				timeout => 600,
 				onlyif => "ls ${package_src}/*deb",
 			}
 

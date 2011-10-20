@@ -42,7 +42,7 @@ define fpm::mpiexec(
 			exec { "${name}_build_package":
 				cwd => "${package_src}",
 				path => "${gem_bin_path}:/usr/bin:/bin",
-				command => "fpm -s dir -t ${package_type} -n ${name} -v ${package_version} -C ${build_dirname} -p ${name}-VERSION_ARCH.${package_type} ${package_dir}/bin ${package_dir}/lib ${package_dir}/sbin ${spool_dir}",
+				command => "fpm -s dir -t ${package_type} -n ${name} -v ${package_version} -C ${build_dirname} -p ${name}-VERSION_ARCH.${package_type} ${package_dir}/bin",
 				require => [ Package['fpm'], Exec["${name}_make_install"], ],
 				timeout => 600,
 				unless => "ls ${broker_dir}/${name}-*deb"
@@ -57,15 +57,6 @@ define fpm::mpiexec(
 				unless => "ls ${broker_dir}/${name}_doc*deb"
 			}
 
-			exec { "${name}_build_dev":
-				cwd => "${package_src}",
-				path => "${gem_bin_path}:/usr/bin:/bin",
-				command => "fpm -s dir -t ${package_type} -n ${name}-dev -v ${package_version} -C ${build_dirname} -p ${name}_dev-VERSION_ARCH.${package_type} ${dev_dir}",
-				require => [ Package['fpm'], Exec["${name}_make_install"], ],
-				timeout => 600,
-				unless => "ls ${broker_dir}/${name}_dev*deb"
-			}
-
 			exec { "${name}_store_build_package":
 				cwd => "${package_src}",
 				path => "/usr/bin:/bin",
@@ -74,7 +65,6 @@ define fpm::mpiexec(
 				require => [
 					Exec["${name}_build_package"],
 					Exec["${name}_build_doc"],
-					Exec["${name}_build_dev"],
 				],
 				onlyif => "ls ${package_src}/*deb",
 			}
